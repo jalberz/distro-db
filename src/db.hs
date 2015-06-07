@@ -19,6 +19,7 @@ main = distribMain master rcdata
 
 master :: [NodeId] -> Process ()
 master peers = do
+
   db <- createDB peers
 
   f <- liftIO $ readFile "Database.hs"

@@ -16,12 +16,23 @@ module Database (
        rcdata,
   ) where
 
+--Distribtued Process pacakges
 import Control.Distributed.Process hiding (Message)
 import Control.Distributed.Process.Closure
+
+--Generic Packages
+import Control.Concurrent hiding (newChan)
+import Control.Exception
 import Control.Monad
-import Language.Haskell.TH
+import Control.Monad.IO.Class
+import qualified Data.Binary
+import Data.Char
 import qualified Data.Map as Map
+import Data.Typeable
+import GHC.Generics (Generic)
+import Language.Haskell.TH
 import Data.Map (Map)
+import System.IO.Error hiding (catch)
 import Text.Printf
 
 import Data.Binary hiding (get)
@@ -29,6 +40,7 @@ import Data.Binary hiding (get)
 import Data.Typeable
 import GHC.Generics (Generic)
 
+--Basic Values for Keys and Values
 type Key   = String
 type Value = String
 
@@ -52,7 +64,6 @@ datastore = runDB Map.empty where
         sendChan sp (Map.lookup k store)
         runDB store
 
-
 --remotable call for database
 remotable ['datastore]
 
@@ -62,7 +73,9 @@ createDB nodes = spawnLocal $ do
   ns <- forM nodes $ \nid -> do
           say $ printf "spawning on %s" (show nid)
           spawn nid $(mkStaticClosure 'datastore)
+  when (null ns) $ liftIO $ ioError (userError "no workers")
   mapM_ monitor ns
+
 
 
 set :: Database -> Key -> Value -> Process ()
@@ -78,5 +91,3 @@ get db k = do
 
 rcdata :: RemoteTable -> RemoteTable
 rcdata = Database.__remoteTable
-  -- For the exercise, change this to include your
-  -- remote metadata, e.g. rcdata = Database.__remoteTable
