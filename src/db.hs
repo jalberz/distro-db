@@ -32,7 +32,7 @@ master backend peers = do
   liftIO $ putStr "Populating Worker Processes...\n"
   zipWithM_ (set db) ws (tail ws)
 
-  liftIO $ putStr "Commands: GET <key>, SET <key> <value>, KILL <Node Id>, QUIT\n"
+  liftIO $ putStr "Commands: GET <key>, SET <key> <value>, KILL <NodeId>, QUIT\n"
 
   get db "module" >>= liftIO . print
   get db "xxxx"   >>= liftIO . print
@@ -52,6 +52,8 @@ master backend peers = do
         ["QUIT"] -> do
           terminateAllSlaves backend
           liftIO $ exitSuccess
+        _ -> do
+          liftIO $ putStrLn ("command not recognized")
 
   terminateAllSlaves backend
   return ()
