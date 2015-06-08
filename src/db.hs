@@ -10,6 +10,7 @@ import Control.Distributed.Process
 import Control.Distributed.Process.Backend.SimpleLocalnet
 import Control.Monad.IO.Class
 import Control.Monad
+import Data.List
 import System.IO
 import System.Exit
 
@@ -47,8 +48,6 @@ master backend peers = do
         ["SET", k, v] -> do
           set db  k v
           liftIO $ putStrLn ("response: " ++ show k ++ "set to" ++ show v)
-        --["KILL", n ] -> do
-        --  terminateSlave (read n :: NodeId)
         ["QUIT"] -> do
           terminateAllSlaves backend
           liftIO $ exitSuccess
