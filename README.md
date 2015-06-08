@@ -2,13 +2,27 @@
 A distributed key-value store written in Haskell
 
 ## Usage
--TODO: write up usage instructions
+- Build a 3 process system (1 master, 2 slave) by the following
+command:
+```
+ghc -Wall db.hs
+./db slave 55551 & ./db slave 55552 & ./db master 55553
+```
+- This will bring a prompt for interacting with the 
+database. Notable commands are listed below
+```
+GET <Key> : Get the value at a given key
+SET <Key> <Value> : Set a given key to a given value
+KILL <NodeId> : Kill a specific slave process, given its node ID
+QUIT : Kill all slave processes and exit from the interactive
+      session
+```
 
 ## Building a Distributed Key-Value Store
-_This project is based on an exercise from Simon Marlow's
-Parallel and Concurrent Programming in Haskell_
+_This project is based on an exercise from Simon Marlow's_
+Parallel and Concurrent Programming in Haskell
 
--Central to doing anything with the `Control.Distributed.Process`
+Central to doing anything with the `Control.Distributed.Process`
 package, is the `Process` monad. A `Process` is analogous to a
 Thread, it has ProcessID and can operate concurrently with other
 Processes. Unlike threads, it operates within the `Process` monad
