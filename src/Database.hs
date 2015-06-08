@@ -95,7 +95,7 @@ possible outcomes becomes true, then it executes that particular action
 messageLoop :: [[ProcessId]] -> Int -> Process ()
 messageLoop workerGroups nSlices
  = receiveWait
-        [ match $ \msg -> handleRequest msg workerGroups nSlices
+        [ match $ \msg -> (handleRequest msg workerGroups nSlices)
           >> messageLoop workerGroups nSlices
         , match $ \(ProcessMonitorNotification _ pid reason) -> do
             say (printf "process %s died: %s" (show pid) (show reason))
@@ -113,7 +113,7 @@ handleRequest m workerGroups nSlices =
     Get k _ -> mapM_ (\x -> send x m) (keyWorkers k)
   where
     keyWorkers :: Key -> [ProcessId]
-    keyWorkers k = workerGroups !! (ord (head k) `mod` nSlices)
+    keyWorkers key = workerGroups !! (ord (head key) `mod` nSlices)
 
 set :: Database -> Key -> Value -> Process ()
 set db k v = do

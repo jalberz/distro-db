@@ -54,7 +54,8 @@ import Network.Socket hiding (shutdown)
 
 import Language.Haskell.TH
 
-distribMain :: ([NodeId] -> Process ()) -> (RemoteTable -> RemoteTable) -> IO ()
+
+distribMain :: (Backend -> [NodeId] -> Process ()) -> (RemoteTable -> RemoteTable) -> IO ()
 distribMain master frtable = do
   args <- getArgs
   let rtable = frtable initRemoteTable
@@ -62,13 +63,13 @@ distribMain master frtable = do
   case args of
     [] -> do
       backend <- initializeBackend defaultHost defaultPort rtable
-      startMaster backend master
+      startMaster backend (master backend)
     [ "master" ] -> do
       backend <- initializeBackend defaultHost defaultPort rtable
-      startMaster backend master
+      startMaster backend (master backend)
     [ "master", port ] -> do
       backend <- initializeBackend defaultHost port rtable
-      startMaster backend master
+      startMaster backend (master backend)
     [ "slave" ] -> do
       backend <- initializeBackend defaultHost defaultPort rtable
       startSlave backend
