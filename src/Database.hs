@@ -80,9 +80,10 @@ createDB nodes = spawnLocal $ do
 
 --Group workers by pairs, overlapping them
 groupWorkers :: [ProcessId] -> [[ProcessId]]
-groupWorkers [] = []
-groupWorkers (a:b:cs) = [a,b]:(groupWorkers cs)
-groupWorkers (_:[]) = []
+groupWorkers pids = case pids of
+  [] -> []
+  (a:b:cs) -> [a,b]:(groupWorkers cs)
+  (_:[]) -> []
 
 {-
 The receiveWait function waits untils one of the match options in the list of
