@@ -25,20 +25,18 @@ master :: Backend -> [NodeId] -> Process ()
 master backend peers = do
   db <- createDB peers
 
-  --liftIO $ putStr "file: "
-  --filename <- liftIO $ getLine
-  f <- liftIO $ readFile "Database.hs"
-  let ws = words f
-
-  liftIO $ putStr "Populating Worker Processes...\n"
-  zipWithM_ (set db) ws (tail ws)
-
-  liftIO $ putStr "Commands: GET <key>, SET <key> <value>, KILL <NodeId>, QUIT\n"
-
+  liftIO $ putStr "Commands: ADDFILE <file>, GET <key>, SET <key> <value>, KILL <NodeId>, QUIT\n"
+  get db "module" >>= liftIO . print
+  get db "xxxx"   >>= liftIO . print
   forever $ do
     l <- liftIO $ do putStr "> "; hFlush stdout; getLine
     when (not (null l)) $ do
       case (words l) of
+        ["ADDFILE", name] -> do
+          file <- liftIO $ readFile name
+          let wrds = words file
+          zipWithM_ (set db) wrds (tail wrds)
+          liftIO $ putStrLn ("Worker processes populated with new file data")
         ["GET", k] -> do
           r <- get db k
           liftIO $ putStrLn ("response: " ++ show r)

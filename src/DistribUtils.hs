@@ -3,7 +3,6 @@ Below code is reproduced from Simon Marlow's github on
 Parallel/Concurrent Haskell: 
 https://github.com/simonmar/parconc-examples/blob/master/DistribUtils.hs
 
-TODO: replace with specialized, homebrewed helper functions
 
 LICENSE:
 Unless stated otherwise in individual source files, the code in this
