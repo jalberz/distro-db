@@ -4,17 +4,19 @@ CMSC 22311 - Functional Systems in Haskell
 Instructors: Stuart Kurtz & Jakub Tucholski
 -}
 
-module Main (main) where
+{-# OPTIONS_GHC -Wall #-}
+
+module TestDB (main) where
 
 import Control.Distributed.Process
 import Control.Distributed.Process.Backend.SimpleLocalnet
-import Control.Monad.IO.Class
+--import Control.Monad.IO.Class
 import Control.Monad
-import Data.List
-import System.IO
+--import Data.List
+--import System.IO
 import System.Exit
 
-import Master
+
 import DistribUtils
 import Database
 
@@ -24,8 +26,11 @@ main = distribMain masterTest rcdata
 
 masterTest :: Backend -> [NodeId] -> Process ()
 masterTest backend peers = do
+	--build database
   db <- createDB peers
 
+  --fill database with contents of
+  --the Database.hs file
   f <- liftIO $ readFile "Database.hs"
   let ws = words f
 
@@ -65,7 +70,7 @@ masterTest backend peers = do
 
   --Test if previous data is still present through gets & sets
   --test new GET functionality
-  liftIO $ putStr "GET test - should be 'Database':\n"
+  liftIO $ putStr "GET test - should be 'DistribUtils':\n"
   get db "module" >>= liftIO . print
 
   liftIO $ putStr "GET test - should be 'shark':\n"
@@ -80,6 +85,8 @@ masterTest backend peers = do
   set db "module" "2changed"
   get db "module" >>= liftIO . print
 
+  --test that quitting successfully closes out the session
   liftIO $ putStr "QUIT test - closing and terminating remaining workers:\n"
   terminateAllSlaves backend
+  _ <- liftIO $ exitSuccess
   return ()

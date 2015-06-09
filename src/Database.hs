@@ -5,7 +5,7 @@ Instructors: Stuart Kurtz & Jakub Tucholski
 -}
 
 {-# LANGUAGE TemplateHaskell, DeriveDataTypeable, DeriveGeneric #-}
---{-# OPTIONS_GHC -Wall #-}
+{-# OPTIONS_GHC -Wall #-}
 
 
 module Database (
@@ -21,26 +21,19 @@ import Control.Distributed.Process hiding (Message)
 import Control.Distributed.Process.Closure
 
 --Control Packages
-import Control.Concurrent hiding (newChan)
 import Control.Exception hiding (catch)
-import Control.Monad
-import Control.Monad.IO.Class
+import Control.Monad (forM, when)
 
 --Data Packages
-import qualified Data.Binary
 import Data.Binary hiding (get)
 import Data.Char
 import qualified Data.Map as Map
-import Data.Map (Map)
 import Data.Typeable
 
 --Other Packages
 import GHC.Generics (Generic)
-import Language.Haskell.TH hiding (match)
-import Prelude hiding (catch)
-import System.IO.Error hiding (catch)
-import Text.Printf
-
+import Prelude
+import Text.Printf (printf)
 
 --Basic Values for Keys and Values
 type Key   = String
@@ -55,7 +48,10 @@ data Message = Set Key Value
 
 instance Binary Message
 
---database process
+{-
+running the database process through 
+updating a running Map
+-}
 datastore :: Process ()
 datastore = runDB Map.empty where
   runDB store = do
@@ -75,56 +71,71 @@ createDB nodes = spawnLocal $ do
   ns <- forM nodes $ \nid -> do
           say $ printf "spawning process on %s" (show nid)
           spawn nid $(mkStaticClosure 'datastore)
-  when (null ns) $ liftIO $ ioError (userError "no workers")
+  when (null ns) $ liftIO $ ioError (userError "worker list is empty!")
   mapM_ monitor ns
   let 
     workerGroups = groupWorkers ns
-    nSlices = length workerGroups
-  messageLoop workerGroups nSlices
+    partitions = length workerGroups
+  processMessages workerGroups partitions
 
---Group workers by pairs TODO: change this
+--Group workers by pairs, overlapping them
 groupWorkers :: [ProcessId] -> [[ProcessId]]
 groupWorkers [] = []
-groupWorkers (a:b:xs) = [a,b] : groupWorkers xs
-groupWorkers [x] = []
+groupWorkers (a:b:cs) = [a,b]:(groupWorkers cs)
+groupWorkers (_:[]) = []
 
 {-
 The receiveWait function waits untils one of the match options in the list of
 possible outcomes becomes true, then it executes that particular action
 -}
-messageLoop :: [[ProcessId]] -> Int -> Process ()
-messageLoop workerGroups nSlices
+processMessages :: [[ProcessId]] -> Int -> Process ()
+processMessages workerGroups partitions
  = receiveWait
-        [ match $ \msg -> (handleRequest msg workerGroups nSlices)
-          >> messageLoop workerGroups nSlices
+        [ match $ \msg -> (handleMsg msg workerGroups partitions)
+          >> processMessages workerGroups partitions
         , match $ \(ProcessMonitorNotification _ pid reason) -> do
             say (printf "process %s died: %s" (show pid) (show reason))
-            messageLoop (map (filter (/= pid)) workerGroups) nSlices
+            processMessages (map (filter (/= pid)) workerGroups) partitions
         ]
 
 {-
-Handle a request by dispersing it out to all the processes with that
+Handle a message by dispersing it out to all the processes with that
 key in their key space
 -}
-handleRequest :: Message -> [[ProcessId]] -> Int -> Process ()
-handleRequest m workerGroups nSlices =
-  case m of
-    Set k _ -> mapM_ (\x -> send x m) (keyWorkers k)
-    Get k _ -> mapM_ (\x -> send x m) (keyWorkers k)
-  where
-    keyWorkers :: Key -> [ProcessId]
-    keyWorkers key = workerGroups !! (ord (head key) `mod` nSlices)
+handleMsg :: Message -> [[ProcessId]] -> Int -> Process ()
+handleMsg m workerGroups partitions = case m of
+    Get k _ -> disperseMsg k m workerGroups partitions
+    Set k _ -> disperseMsg k m workerGroups partitions
 
+{-
+disperse the messages amongst the worker processes
+-}    
+disperseMsg :: Key -> Message -> [[ProcessId]] -> Int -> Process ()
+disperseMsg k m workerGroups partitions = mapM_ (\x -> send x m) (keyWorkers k) where
+  keyWorkers key = workerGroups !! (index key)
+  index key = ord (head key) `mod` partitions
+
+{-
+send a set message, establishing that
+a given key, which may or may no already be in the 
+datastore, be coupled with a new value
+-}
 set :: Database -> Key -> Value -> Process ()
 set db k v = do
   send db (Set k v)
 
-
+{-
+get the value associated with a specific key from the datastore
+-}
 get :: Database -> Key -> Process (Maybe Value)
 get db k = do
   (sp, rp) <- newChan
   send db (Get k sp)
   receiveChan rp
 
+{-
+this establishes which remotetable will
+be used by the datastore (see distribmain)
+-}
 rcdata :: RemoteTable -> RemoteTable
 rcdata = Database.__remoteTable

@@ -53,7 +53,13 @@ import Network.Socket hiding (shutdown)
 
 import Language.Haskell.TH
 
-
+{-
+depending if the arguments call for a master or a slave process,
+the appropriate process in the backend will be initiated given
+a specified host and port. If none is specified, defaults
+will be utilized. This code has been modified from its 
+original version.
+-}
 distribMain :: (Backend -> [NodeId] -> Process ()) -> (RemoteTable -> RemoteTable) -> IO ()
 distribMain master frtable = do
   args <- getArgs
