@@ -35,6 +35,13 @@ processes' process IDs
 - One can now attempt to reuse the `GET` and `SET` commands, if the 
 processes had a sibling process that also held a copy of the data, then
 a `Just <value>` should be returned as opposed to `Nothing`
+- To build via cabal, simply follow the instructions below while in the
+`distro-db` directory:
+```
+$ cabal install --only-dependencies
+$ cabal configure
+$ cabal build
+```
 
 ## Implementation
 _This project is based on an exercise from Simon Marlow's_
