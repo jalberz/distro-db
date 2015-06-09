@@ -6,6 +6,9 @@ Instructors: Stuart Kurtz & Jakub Tucholski
 
 {-# LANGUAGE OverloadedStrings #-}
 
+--Code for building the Master Process
+module Master where
+
 import Control.Distributed.Process
 import Control.Distributed.Process.Backend.SimpleLocalnet
 import Control.Monad.IO.Class
@@ -18,8 +21,6 @@ import DistribUtils
 
 import Database  (Database, createDB, get, set, rcdata)
 
-main = distribMain master rcdata
-
 master :: Backend -> [NodeId] -> Process ()
 master backend peers = do
   db <- createDB peers
@@ -29,14 +30,10 @@ master backend peers = do
   f <- liftIO $ readFile "Database.hs"
   let ws = words f
 
-
   liftIO $ putStr "Populating Worker Processes...\n"
   zipWithM_ (set db) ws (tail ws)
 
   liftIO $ putStr "Commands: GET <key>, SET <key> <value>, KILL <NodeId>, QUIT\n"
-
-  get db "module" >>= liftIO . print
-  get db "xxxx"   >>= liftIO . print
 
   forever $ do
     l <- liftIO $ do putStr "> "; hFlush stdout; getLine

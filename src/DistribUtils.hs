@@ -82,3 +82,4 @@ distribMain master frtable = do
 
 defaultHost = "localhost"
 defaultPort = "44444"
+
