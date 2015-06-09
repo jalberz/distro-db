@@ -35,6 +35,7 @@ processes' process IDs
 - One can now attempt to reuse the `GET` and `SET` commands, if the 
 processes had a sibling process that also held a copy of the data, then
 a `Just <value>` should be returned as opposed to `Nothing`
+
 ## Building a Distributed Key-Value Store
 _This project is based on an exercise from Simon Marlow's_
 Parallel and Concurrent Programming in Haskell
