@@ -5,19 +5,36 @@ A distributed key-value store written in Haskell
 - Build a 3 process system (1 master, 2 slave) by the following
 command:
 ```
-ghc -Wall db.hs
-./db slave 55551 & ./db slave 55552 & ./db master 55553
+$ ghc -Wall Main.hs
+$ ./Main slave 55551 & ./Main slave 55552 & ./Main master 55553
 ```
+- This should open something analogous to the following:
+```
+[3] 23321
+[4] 23322
+Populating Worker Processes...
+Commands: GET <key>, SET <key> <value>, KILL <NodeId>, QUIT
+Mon Jun  8 23:35:55 UTC 2015 pid://localhost:55553:0:11: spawning process on nid://localhost:55552:0
+Mon Jun  8 23:35:55 UTC 2015 pid://localhost:55553:0:11: spawning process on nid://localhost:55551:0
+>
+```
+The first two sets of numbers represent the slave processes, where
+`22321` and `23322` are their `ProcessID`s. For each of these, there is
+a corresponding announcement of the spawning of a datastore at each one
 - This will bring a prompt for interacting with the 
 database. Notable commands are listed below
 ```
 GET <Key> : Get the value at a given key
 SET <Key> <Value> : Set a given key to a given value
-KILL <NodeId> : Kill a specific slave process, given its node ID
 QUIT : Kill all slave processes and exit from the interactive
       session
 ```
-
+- To kill one of the slave processes, merely open an additional terminal
+and type `kill <ProcessID>` where the `ProcessID` is one of the slave
+processes' process IDs
+- One can now attempt to reuse the `GET` and `SET` commands, if the 
+processes had a sibling process that also held a copy of the data, then
+a `Just <value>` should be returned as opposed to `Nothing`
 ## Building a Distributed Key-Value Store
 _This project is based on an exercise from Simon Marlow's_
 Parallel and Concurrent Programming in Haskell
