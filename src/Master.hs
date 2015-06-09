@@ -12,15 +12,15 @@ module Master where
 
 import Control.Distributed.Process
 import Control.Distributed.Process.Backend.SimpleLocalnet
-import Control.Monad
-import System.IO
-import System.Exit
+import Control.Monad (forever, when, zipWithM_)
+import System.IO (hFlush, stdout)
+import System.Exit (exitSuccess)
 
 import Database (createDB, get, set)
 
 {-
-Following function runs the master process, which runs the various
-commands from the terminal to the worker processes and runs their
+Following function runs the master process, which carries the various
+commands from the terminal to the worker processes and brings their
 responses back.
 -}
 master :: Backend -> [NodeId] -> Process ()

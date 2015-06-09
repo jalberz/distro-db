@@ -10,12 +10,8 @@ module TestDB (main) where
 
 import Control.Distributed.Process
 import Control.Distributed.Process.Backend.SimpleLocalnet
---import Control.Monad.IO.Class
 import Control.Monad
---import Data.List
---import System.IO
-import System.Exit
-
+import System.Exit (exitSuccess)
 
 import DistribUtils
 import Database
