@@ -36,7 +36,7 @@ processes' process IDs
 processes had a sibling process that also held a copy of the data, then
 a `Just <value>` should be returned as opposed to `Nothing`
 
-## Building a Distributed Key-Value Store
+## Implementation
 _This project is based on an exercise from Simon Marlow's_
 Parallel and Concurrent Programming in Haskell
 
@@ -59,9 +59,39 @@ to interact with the datastore. Like with MVars/TVars, these channels
 can carry messages to and from a specific `Process`, possibly updating
 that `Process`
 -`set` and `get` functions 
+
 ## Fault Tolerance
-  -TODO: write up fault tolerance impplementations
+- Fault tolerance is important for any distributed key-value store--if one
+machine goes down in a cluster, one does not wish for the data on that machine to
+be unavailable for access.
+- The first, naive attempt at fault tolerance merely calls for the copying of
+the same data across two processes. Each process will have a buddy that will
+mirror its data contents - should one go down, there is a back up.
+- A second more nuanced version of this includes an awareness by the program
+when a particular process dies. When a death is noticed, the key space is
+redistributed across the remaining set of processes.
+- A further evolution of this, which I plan to implement in the future, is
+the Dynamo Ring, where processes are grouped in a ring formation where a given
+worker's data contents are shared with its partners on both its left and right.
+The program is aware when a worker exits the ring, and closes the gap between
+the two neighbour workers by linking them and then redistributing the data over
+the key space of the remaining processes as in the second attempt. This approach
+is loosely based on the Amazon's paper on its distributed key-value store (see
+references).
   
+## Testing
+- Considering the fact that much of the program runs from within the 
+Process monad (as stated earlier, similar to IO), I opted for a more homebrewed
+test function as opposed to Hspec or Quickcheck
+- To run the test batch, first insure that all database-related processes
+are dead (a simple `sudo netstat -lnp` command on the terminal line can
+determine this). Then run the following code from `src`:
+```
+$ ghc TestDB.hs
+$ ./TestDB slave 55554 & ./TestDB slave 55555 & ./TestDB master 55556
+```
+- One can then review the output as it appears at the terminal
+
 ## References
 * Simon Marlow's [*Parallel and Concurrent Programming in Haskell*]
   (http://community.haskell.org/~simonmar/pcph/)
