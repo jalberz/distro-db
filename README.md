@@ -53,19 +53,34 @@ Thread, it has ProcessID and can operate concurrently with other
 Processes. Unlike threads, it operates within the `Process` monad
 as opposed to the `IO` monad - though `Process` is an instance of
 `MonadIO` allowing use of IO functions within the `Process` monad.
-The `Process` Monad allows for compl
--Some parallels to the Control.Concurrent package
--Much as forkIO is needed to create a newthread,
+- In terms of architecture, a master process is initiated that first
+finds and spawns processes on all the possible workers. It then
+interprets commands given to the terminal and passes them on to the various
+worker processes.
+-Some parallels to the Control.Concurrent package we learnt about earlier
+in terms of syntax, for example, just as forkIO is needed to create a newthread,
 `spawn` is used to start a new process, given the
 id of a node and a closure around a process.
 ```
 spawn nid $(mkStaticClosure `datastore)
 ```
--The `set` and `get` commands take a given key and use channels
+Notice that this use of `$` is as a splice
+- The `set` and `get` commands take a given key and use channels
 to interact with the datastore. Like with MVars/TVars, these channels
 can carry messages to and from a specific `Process`, possibly updating
 that `Process`
--`set` and `get` functions 
+- Upon the arrival of a new message, the messages key is indexed across
+the keyspace of all the worker processes. If a worker has that particular
+key, it is updated or pulled depending on the message in question. This
+is pretty naive in regards to how most key-value stores go, as there is
+one truth which is universally spread to all associated workers without
+any sort of consensus algorithm a la Paxos. However, this system is simple
+and effective if you treat new data as an always correct update of older
+data.
+-`distribMain` interprets the initial command line arguments and 
+instantiates the backend, specifying hosts and ports, which helps to
+abstract away much of the underlying networking that is happening
+here.
 
 ## Fault Tolerance
 - Fault tolerance is important for any distributed key-value store--if one
